@@ -51,7 +51,8 @@ def init_model():
         if should_download and MODEL_URL:
             print(f"📡 Attempting to download model from {MODEL_URL}...")
             MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
-            response = requests.get(MODEL_URL, stream=True)
+            # Use explicit connect/read timeouts so startup never hangs indefinitely.
+            response = requests.get(MODEL_URL, stream=True, timeout=(10, 120))
             if response.status_code == 200:
                 # Check if the URL points to a zip file
                 if MODEL_URL.lower().endswith('.zip'):
