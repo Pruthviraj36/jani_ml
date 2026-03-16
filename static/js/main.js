@@ -177,8 +177,8 @@
     if (s) currentState.stats = s;
   }
 
-  async function refreshHistory() {
-    const h = await apiFetch("/api/history");
+  async function refreshHistory(limit = 30) {
+    const h = await apiFetch(`/api/history?limit=${limit}`);
     if (h) currentState.history = h;
   }
 
@@ -648,7 +648,7 @@
           (v) => Math.floor(v).toLocaleString());
       }
     }
-  }, 5000);
+  }, 15000);
 
   // ── EXPORT ERROR REPORTING ────────────────────────────────────
   window.reportError = function (msg) {

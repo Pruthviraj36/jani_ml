@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, jsonify
 import joblib
 import pandas as pd
 from datetime import datetime
+from collections import deque
 import requests
 import zipfile
 import io
@@ -98,8 +99,9 @@ def init_model():
 
 init_model()
 
-# ── In-memory prediction history ─────────────────────────────────
-prediction_history = []
+# ── In-memory prediction history (bounded to avoid unbounded RAM growth) ──
+MAX_HISTORY_ITEMS = int(os.environ.get('MAX_HISTORY_ITEMS', 500))
+prediction_history = deque(maxlen=MAX_HISTORY_ITEMS)
 
 # ── Feature definitions (Visible in UI) ──────────────────────────
 CATEGORICAL_OPTIONS = {
@@ -247,7 +249,14 @@ def model_info():
 @app.route('/api/history')
 def history():
     """Return prediction history for Loan Portfolio page."""
-    return jsonify(list(reversed(prediction_history)))
+    # Bound payload size to keep response times predictable under load.
+    try:
+        limit = int(request.args.get('limit', 100))
+    except (TypeError, ValueError):
+        limit = 100
+    limit = max(1, min(limit, MAX_HISTORY_ITEMS))
+    items = list(prediction_history)
+    return jsonify(list(reversed(items[-limit:])))
 
 
 @app.route('/api/health')
